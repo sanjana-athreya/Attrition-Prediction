@@ -1,4 +1,4 @@
-# Employee Attrition Rate
+# Employee Attrition Analysis
 
 Employees are the backbone of any organization. An organization’s performance depends on the quality of employees and how they can retain them. Employee attrition can be for voluntary or involuntary reasons.
 The reasons are through natural means like retirement, or it can be through resignation, termination of contract. It costs precious time and money and can result in a loss of staff morale. This could also tarnish a Company's reputation.
