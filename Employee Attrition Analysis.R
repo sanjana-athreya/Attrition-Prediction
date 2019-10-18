@@ -2,11 +2,21 @@ library(tidyverse)
 library(dplyr)
 library(ggplot2)
 library(GGally)
-library(distr)
+library(DMwR)
+library(car)
+library(cowplot)
+library(pROC)
 library(ggcorrplot)
 library(lattice)
+library(sm)
+library(Hmisc)
+library(asbio)
 library(MVA)
 library(Hotelling)
+library(Amelia)
+library(grid)
+library(gridExtra)
+library(PerformanceAnalytics)
 ##Importing Data and inital analyses
 #Importing csv file from a location
 attr<- read.csv(file="MVA/Attrition Dataset.csv", header=TRUE, sep=",")
@@ -295,7 +305,7 @@ identify(attr$YearsWithCurrManager)
 #Chi Plot for inspecting the independence
 chi.plot(attr$MonthlyIncome,attr$Age)
 
-#Plotting joint boxplots for various categories wrt numerical column Monthly Income
+#Plotting joint boxplots for various categories wrt numerical column Age
 bwplot(attr$Department ~ attr$Age, data=attr, ylab='Department',xlab='Age')
 bwplot(attr$Gender ~ attr$Age, data=attr, ylab='Gender',xlab='Age')
 bwplot(attr$EducationField ~ attr$Age, data=attr, ylab='EducationField',xlab='Age')
@@ -413,4 +423,34 @@ t2testattr <- hotelling.test(attr$MonthlyIncome + attr$DistanceFromHome ~ attr$A
 cat("T2 statistic =",t2testattr$stat[[1]],"\n")
 print(t2testattr)
 
+#***************PCA********************
+#plot.new(); dev.off()
+#Considering the numeric columns that will help to get variance in data
+attr_pca <- attr[,numvar]
+#Plotting correlation plot to understand the how feature are related to each other
+correplot<-cor(attr_pca)
+corrplot(correplot,method="circle")
+#Finding the principal components of data
+attr_pca <- prcomp(attr_pca,scale=TRUE)
+attr_pca
+names(attr_pca)
+head(attr_pca)
+summary(attr_pca)
+#Extract variance against features
+eigenvalues<-attr_pca$sdev^2
+eigenvalues
+sum(eigenvalues)
+names(eigenvalues) <- paste("PC",1:14,sep="")
+eigenvalues
+sumoflambdas <- sum(eigenvalues)
+sumoflambdas
+#Variance %
+pctvar<- (eigenvalues/sumoflambdas)*100
+pctvar
+#Calculate cumulative of variance
+cumvar <- cumsum(pctvar)
+cumvar
+#Visualize PCA using Scree plot
+fviz_screeplot(attr_pca, ncp=14)
+summary(attr_pca)
 
