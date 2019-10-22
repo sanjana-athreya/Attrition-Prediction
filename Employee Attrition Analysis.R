@@ -1,10 +1,14 @@
 library(tidyverse)
 library(dplyr)
+library(MASS)
 library(ggplot2)
 library(GGally)
 library(DMwR)
 library(car)
+library(e1071)
+library(caret)
 library(cowplot)
+library(caTools)
 library(pROC)
 library(ggcorrplot)
 library(lattice)
@@ -17,9 +21,13 @@ library(Amelia)
 library(grid)
 library(gridExtra)
 library(PerformanceAnalytics)
+library(stats)
+library(factoextra)
+library(corrplot)
+library(devtools)
 ##Importing Data and inital analyses
 #Importing csv file from a location
-attr<- read.csv(file="MVA/Attrition Dataset.csv", header=TRUE, sep=",")
+attr<- read.csv("C:/WD Jimit/MITA Spring 19/Ronak Parrikh/Multivariate Analysis/Dataset/HR-Employee-Attrition.csv")
 attr <- as.data.frame(attr)
 glimpse(attr)
 
@@ -49,6 +57,8 @@ attr$PerformanceRating <- factor(attr$PerformanceRating)
 attr$RelationshipSatisfaction <- factor(attr$RelationshipSatisfaction)
 attr$StockOptionLevel <- factor(attr$StockOptionLevel)
 attr$WorkLifeBalance <- factor(attr$WorkLifeBalance)
+
+str(attr)
 #Assigning categorical and numerical variable to temporary variable
 catvar<-c('BusinessTravel','Department','Education','EducationField','EnvironmentSatisfaction','Gender',
           'JobRole','JobInvolvement','JobLevel','JobSatisfaction',
@@ -77,6 +87,8 @@ ggplot(data=attr, aes(attr$Age)) +
                  aes(fill=..count..))+
   labs(x="Age", y="Count")+
   scale_fill_gradient("Count", low="yellow", high="dark red")
+
+
 #Checking for distributions in numerical columns
 #The qqPlot show a few extreme outliers which break the assumption of 95% confidence
 #normal distribution
@@ -122,6 +134,13 @@ lines(density(attr$NumCompaniesWorked,na.rm = T))
 rug(jitter(attr$NumCompaniesWorked))
 qqPlot(attr$NumCompaniesWorked,main='Normal QQ plot of NumCompaniesWorked')
 par(mfrow=c(1,1))
+
+# par(mfrow = c(1,2))
+# hist(attr$PerformanceRating,xlab='',main = 'Histogram of PerformanceRating',freq = FALSE)
+# lines(density(attr$PerformanceRating,na.rm = T))
+# rug(jitter(attr$PerformanceRating))
+# qqPlot(attr$PerformanceRating,main='Normal QQ plot of PerformanceRating')
+# par(mfrow=c(1,1))
 
 par(mfrow = c(1,2))
 hist(attr$PercentSalaryHike,xlab='',main = 'Histogram of PercentSalaryHike',freq = FALSE)
@@ -177,7 +196,7 @@ plot(attr$Age, xlab = "")
 abline(h = mean(attr$Age, na.rm = T), lty = 1)
 abline(h = mean(attr$Age, na.rm = T) + sd(attr$Age, na.rm = T),lty = 2)
 abline(h = median(attr$Age, na.rm = T), lty = 3)
-identify(attr$Age)
+#identify(attr$Age)
 
 #Boxplot distributions for Daily rate
 boxplot(attr$DailyRate, ylab = "DailyRate",outline = TRUE)
@@ -188,7 +207,7 @@ plot(attr$DailyRate, xlab = "")
 abline(h = mean(attr$DailyRate, na.rm = T), lty = 1)
 abline(h = mean(attr$DailyRate, na.rm = T) + sd(attr$DailyRate, na.rm = T),lty = 2)
 abline(h = median(attr$DailyRate, na.rm = T), lty = 3)
-identify(attr$DailyRate)
+#identify(attr$DailyRate)
 
 #Boxplot distributions for Distance from home
 boxplot(attr$DistanceFromHome, ylab = "DistanceFromHome",outline = TRUE)
@@ -199,7 +218,7 @@ plot(attr$DistanceFromHome, xlab = "")
 abline(h = mean(attr$DistanceFromHome, na.rm = T), lty = 1)
 abline(h = mean(attr$DistanceFromHome, na.rm = T) + sd(attr$DistanceFromHome, na.rm = T),lty = 2)
 abline(h = median(attr$DistanceFromHome, na.rm = T), lty = 3)
-identify(attr$DistanceFromHome)
+#identify(attr$DistanceFromHome)
 
 #Boxplot distributions for Monthly Income
 boxplot(attr$MonthlyIncome, ylab = "Monthly Income")
@@ -210,7 +229,7 @@ plot(attr$MonthlyIncome, xlab = "")
 abline(h = mean(attr$MonthlyIncome, na.rm = T), lty = 1)
 abline(h = mean(attr$MonthlyIncome, na.rm = T) + sd(attr$MonthlyIncome, na.rm = T),lty = 2)
 abline(h = median(attr$MonthlyIncome, na.rm = T), lty = 3)
-identify(attr$MonthlyIncome)
+#identify(attr$MonthlyIncome)
 
 #Boxplot distributions for  NumCompaniesWorked
 boxplot(attr$NumCompaniesWorked, ylab = "NumCompaniesWorked")
@@ -221,7 +240,7 @@ plot(attr$NumCompaniesWorked, xlab = "")
 abline(h = mean(attr$NumCompaniesWorked, na.rm = T), lty = 1)
 abline(h = mean(attr$NumCompaniesWorked, na.rm = T) + sd(attr$NumCompaniesWorked, na.rm = T),lty = 2)
 abline(h = median(attr$NumCompaniesWorked, na.rm = T), lty = 3)
-identify(attr$NumCompaniesWorked)
+#identify(attr$NumCompaniesWorked)
 
 #Boxplot distributions for  PercentSalaryHike
 boxplot(attr$PercentSalaryHike, ylab = "PercentSalaryHike")
@@ -232,7 +251,7 @@ plot(attr$PercentSalaryHike, xlab = "")
 abline(h = mean(attr$PercentSalaryHike, na.rm = T), lty = 1)
 abline(h = mean(attr$PercentSalaryHike, na.rm = T) + sd(attr$PercentSalaryHike, na.rm = T),lty = 2)
 abline(h = median(attr$PercentSalaryHike, na.rm = T), lty = 3)
-identify(attr$PercentSalaryHike)
+#identify(attr$PercentSalaryHike)
 
 
 
@@ -245,7 +264,7 @@ plot(attr$TotalWorkingYears, xlab = "")
 abline(h = mean(attr$TotalWorkingYears, na.rm = T), lty = 1)
 abline(h = mean(attr$TotalWorkingYears, na.rm = T) + sd(attr$TotalWorkingYears, na.rm = T),lty = 2)
 abline(h = median(attr$TotalWorkingYears, na.rm = T), lty = 3)
-identify(attr$TotalWorkingYears)
+#identify(attr$TotalWorkingYears)
 
 #Boxplot distributions for  TrainingTimesLastYear
 boxplot(attr$TrainingTimesLastYear, ylab = "TrainingTimesLastYear")
@@ -256,7 +275,7 @@ plot(attr$TrainingTimesLastYear, xlab = "")
 abline(h = mean(attr$TrainingTimesLastYear, na.rm = T), lty = 1)
 abline(h = mean(attr$TrainingTimesLastYear, na.rm = T) + sd(attr$TrainingTimesLastYear, na.rm = T),lty = 2)
 abline(h = median(attr$TrainingTimesLastYear, na.rm = T), lty = 3)
-identify(attr$TrainingTimesLastYear)
+#identify(attr$TrainingTimesLastYear)
 
 #Boxplot distributions for  YearsAtCompany
 boxplot(attr$YearsAtCompany, ylab = "YearsAtCompany")
@@ -267,7 +286,7 @@ plot(attr$YearsAtCompany, xlab = "")
 abline(h = mean(attr$YearsAtCompany, na.rm = T), lty = 1)
 abline(h = mean(attr$YearsAtCompany, na.rm = T) + sd(attr$YearsAtCompany, na.rm = T),lty = 2)
 abline(h = median(attr$YearsAtCompany, na.rm = T), lty = 3)
-identify(attr$YearsAtCompany)
+#identify(attr$YearsAtCompany)
 
 #Boxplot distributions for  YearsInCurrentRole
 boxplot(attr$YearsInCurrentRole, ylab = "YearsInCurrentRole")
@@ -278,7 +297,7 @@ plot(attr$YearsInCurrentRole, xlab = "")
 abline(h = mean(attr$YearsInCurrentRole, na.rm = T), lty = 1)
 abline(h = mean(attr$YearsInCurrentRole, na.rm = T) + sd(attr$YearsInCurrentRole, na.rm = T),lty = 2)
 abline(h = median(attr$YearsInCurrentRole, na.rm = T), lty = 3)
-identify(attr$YearsInCurrentRole)
+#identify(attr$YearsInCurrentRole)
 
 #Boxplot distributions for  YearsSinceLastPromotion
 boxplot(attr$YearsSinceLastPromotion, ylab = "YearsSinceLastPromotion")
@@ -289,7 +308,7 @@ plot(attr$YearsSinceLastPromotion, xlab = "")
 abline(h = mean(attr$YearsSinceLastPromotion, na.rm = T), lty = 1)
 abline(h = mean(attr$YearsSinceLastPromotion, na.rm = T) + sd(attr$YearsSinceLastPromotion, na.rm = T),lty = 2)
 abline(h = median(attr$YearsSinceLastPromotion, na.rm = T), lty = 3)
-identify(attr$YearsSinceLastPromotion)
+#identify(attr$YearsSinceLastPromotion)
 
 #Boxplot distributions for  YearsWithCurrManager
 boxplot(attr$YearsWithCurrManager, ylab = "YearsWithCurrManager")
@@ -300,7 +319,7 @@ plot(attr$YearsWithCurrManager, xlab = "")
 abline(h = mean(attr$YearsWithCurrManager, na.rm = T), lty = 1)
 abline(h = mean(attr$YearsWithCurrManager, na.rm = T) + sd(attr$YearsWithCurrManager, na.rm = T),lty = 2)
 abline(h = median(attr$YearsWithCurrManager, na.rm = T), lty = 3)
-identify(attr$YearsWithCurrManager)
+#identify(attr$YearsWithCurrManager)
 
 #Chi Plot for inspecting the independence
 chi.plot(attr$MonthlyIncome,attr$Age)
@@ -312,7 +331,7 @@ bwplot(attr$EducationField ~ attr$Age, data=attr, ylab='EducationField',xlab='Ag
 bwplot(attr$JobRole ~ attr$Age, data=attr, ylab='JobRole',xlab='Age')
 bwplot(attr$MaritalStatus ~ attr$MonthlyIncome, data=attr, ylab='MaritalStatus',xlab='Age')
 bwplot(attr$BusinessTravel ~ attr$Age, data=attr, ylab='BusinessTravel',xlab='Age')
-#Plotting stripplots for various categories wrt numerical column TotalCharges
+#Plotting stripplots for various categories wrt numerical column Age
 bwplot(attr$Department ~ attr$Age, data=attr,panel=panel.bpplot, 
        probs=seq(.01,.49,by=.01), datadensity=TRUE, ylab='Department',xlab='Age')
 bwplot(attr$Gender ~ attr$Age, data=attr,panel=panel.bpplot, 
@@ -350,33 +369,30 @@ attr_i <- attr[,c("Age","DailyRate","DistanceFromHome","HourlyRate",
 attr_i <- data.frame(scale(attr_i))
 
 #Creating temporary variables for the categorical data
-attr_c <- attr[,-c(2,3,5,8,10,11,12,13,14,15,19,21,22,23)]
-temporary<- data.frame(sapply(attr_c,function(x) data.frame(model.matrix(~x-1,data =attr_c))[,-1]))
-head(temporary)
-View(attr)
+#attr_c <- attr[,-c(2,3,5,8,10,11,12,13,14,15,19,21,22,23)]
+#temporary<- data.frame(sapply(attr_c,function(x) data.frame(model.matrix(~x-1,data =attr_c))[,-1]))
+#head(temporary)
+#View(temporary)
+#View(attr)
 
 #Combining the temporary and the numeric columns and create the final dataset
-attr_final <- cbind(attr_i,temporary)
-head(attr_final)
-glimpse(attr_final)
+#attr_final <- cbind(attr_i,temporary)
+#head(attr_final)
+#glimpse(attr_final)
 
 
-# solve the error "Figure margins too large"
-par("mar")
-par(mar=c(1,1,1,1))
-graphics.off()
-dev.off()
-##Matrix Plots, Covariance and Corelations Plots
-#ScatterPlot matrix
-pairs(attr_final[,1:5],pch=".",cex=1.5)
 
 #CorrelationMatrix
-cormatrix <- round(cor(attr_final),4)
-cormatrix
+# cormatrix <- round(cor(attr_final),4)
+# cormatrix
 #Heatmap for correlation matrix
 #Negative correlations are shown in blue and positive in red
-col<- colorRampPalette(c("blue", "white", "red"))(20)
-heatmap(cormatrix, col=col, symm=TRUE)
+# col<- colorRampPalette(c("blue", "white", "red"))(20)
+# heatmap(cormatrix, col=col, symm=TRUE)
+
+
+
+
 
 
 ##Test of Significance
@@ -422,22 +438,33 @@ print(t2testgender)
 t2testattr <- hotelling.test(attr$MonthlyIncome + attr$DistanceFromHome ~ attr$Attrition, data=attr)
 cat("T2 statistic =",t2testattr$stat[[1]],"\n")
 print(t2testattr)
+attach(attr)
+attach(attr_pca)
 
-#***************PCA********************
+#PCA
 #plot.new(); dev.off()
 #Considering the numeric columns that will help to get variance in data
 attr_pca <- attr[,numvar]
+# solve the error "Figure margins too large"
+par("mar")
+par(mar=c(1,1,1,1))
+#graphics.off()
+#dev.off()
+##Matrix Plots, Covariance and Corelations Plots
+#ScatterPlot matrix
+pairs(attr_pca[,10:14],pch=".",cex=1.5)
+
 #Plotting correlation plot to understand the how feature are related to each other
 correplot<-cor(attr_pca)
 corrplot(correplot,method="circle")
 #Finding the principal components of data
-attr_pca <- prcomp(attr_pca,scale=TRUE)
-attr_pca
-names(attr_pca)
-head(attr_pca)
-summary(attr_pca)
+attr_pca_done <- prcomp(attr_pca,scale=TRUE)
+attr_pca_done
+names(attr_pca_done)
+head(attr_pca_done)
+summary(attr_pca_done)
 #Extract variance against features
-eigenvalues<-attr_pca$sdev^2
+eigenvalues<-attr_pca_done$sdev^2
 eigenvalues
 sum(eigenvalues)
 names(eigenvalues) <- paste("PC",1:14,sep="")
@@ -450,7 +477,109 @@ pctvar
 #Calculate cumulative of variance
 cumvar <- cumsum(pctvar)
 cumvar
-#Visualize PCA using Scree plot
-fviz_screeplot(attr_pca, ncp=14)
-summary(attr_pca)
+matlambdas <- rbind(eigenvalues,pctvar,cumvar)
+matlambdas
 
+rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
+round(matlambdas,4)
+attr_pca_done$rotation
+#Visualize PCA using Scree plot
+fviz_screeplot(attr_pca_done, ncp=14)
+summary(attr_pca_done)
+
+
+
+#Sample scores stored in attr_pca$x
+#We need to calculate the scores on each of these components for each individual in our sample. 
+attr_pca_done$x
+#x_pca$x
+
+typ_pca <- cbind(data.frame(Attrition),attr_pca_done$x)
+typ_pca
+str(typ_pca)
+#typ_pca
+
+
+
+
+#T-Test-- We see that true difference in all the means is different from zero.
+t.test(PC1~attr$Attrition,data=typ_pca)
+t.test(PC2~attr$Attrition,data=typ_pca)
+t.test(PC3~attr$Attrition,data=typ_pca)
+t.test(PC4~attr$Attrition,data=typ_pca)
+t.test(PC5~attr$Attrition,data=typ_pca)
+t.test(PC6~attr$Attrition,data=typ_pca)
+t.test(PC7~attr$Attrition,data=typ_pca)
+t.test(PC8~attr$Attrition,data=typ_pca)
+t.test(PC9~attr$Attrition,data=typ_pca)
+t.test(PC10~attr$Attrition,data=typ_pca)
+t.test(PC11~attr$Attrition,data=typ_pca)
+t.test(PC12~attr$Attrition,data=typ_pca)
+t.test(PC13~attr$Attrition,data=typ_pca)
+t.test(PC14~attr$Attrition,data=typ_pca)
+
+#F-Test #Testing Variation
+
+
+#Variance Test- Test for variance
+var.test(PC1~attr$Attrition,data=typ_pca)
+var.test(PC2~attr$Attrition,data=typ_pca)
+var.test(PC3~attr$Attrition,data=typ_pca)
+var.test(PC4~attr$Attrition,data=typ_pca)
+var.test(PC5~attr$Attrition,data=typ_pca)
+var.test(PC6~attr$Attrition,data=typ_pca)
+var.test(PC7~attr$Attrition,data=typ_pca)
+var.test(PC8~attr$Attrition,data=typ_pca)
+var.test(PC9~attr$Attrition,data=typ_pca)
+var.test(PC10~attr$Attrition,data=typ_pca)
+var.test(PC11~attr$Attrition,data=typ_pca)
+var.test(PC12~attr$Attrition,data=typ_pca)
+var.test(PC13~attr$Attrition,data=typ_pca)
+var.test(PC14~attr$Attrition,data=typ_pca)
+
+#Plotting the scores of Pricipal Component 1 and Principal component 2
+plot(typ_pca$PC1, typ_pca$PC2,xlab="PC1:", ylab="PC2")
+abline(h=0)
+abline(v=0)
+
+
+#Plotting the Variance of Principal Components
+plot(eigenvalues ,xlab= "Component number", ylab = "Component variance", type = "l", main = "Scree diagram")
+
+#Plotting the Log variance of COmponents
+
+plot(log(eigenvalues), xlab = "Component number",ylab = "log(Component variance)", type="l",main = "Log(eigenvalue) diagram")
+
+#Variance of the principal components
+
+#View(attr_pca_done)
+diag(cov(attr_pca_done$x))
+#x_pca$x[,1]
+#x_pca$x
+
+#Plotting the scores
+
+xlim <- range(attr_pca_done$x[,1])
+plot(attr_pca_done$x,xlim=xlim,ylim=xlim)
+#attr_pca_done$rotation[,1]
+#attr_pca_done$rotation
+
+
+
+
+#Variance plot for each component. We can see that all components play a dominant role.
+
+plot(attr_pca_done)
+
+
+#get the original value of the data based on PCA
+center <- attr_pca_done$center
+scale <- attr_pca_done$scale
+new_attrition <- as.matrix(attr[,-2])
+new_attrition
+#drop(scale(new_attrition,center=center, scale=scale)%*%attr_pca_done$rotation[,1])
+predict(attr_pca_done)[,2]
+#The aboved two gives us the same thing. predict is a good function to know.
+out <- sapply(10:14, function(i){plot(attr$Attrition,attr_pca_done$x[,i],xlab=paste("PC",i,sep=""),ylab="Attrition")})
+out
+pairs(attr_pca_done$x[,10:14], ylim = c(-6,4),xlim = c(-6,4),panel=function(x,y,...){text(x,y,attr$Attrition)})
