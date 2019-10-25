@@ -25,9 +25,14 @@ library(stats)
 library(factoextra)
 library(corrplot)
 library(devtools)
+library(data.table)
+install.packages("cluster", lib="/Library/Frameworks/R.framework/Versions/3.5/Resources/library") 
+
+library(cluster) 
+
 ##Importing Data and inital analyses
 #Importing csv file from a location
-attr<- read.csv("C:/WD Jimit/MITA Spring 19/Ronak Parrikh/Multivariate Analysis/Dataset/HR-Employee-Attrition.csv")
+attr<- read.csv("C:/Users/HP/Downloads/HR-Employee-Attrition.csv")
 attr <- as.data.frame(attr)
 glimpse(attr)
 
@@ -127,9 +132,12 @@ rug(jitter(attr$MonthlyIncome))
 qqPlot(attr$MonthlyIncome,main='Normal QQ plot of Monthly Income')
 par(mfrow=c(1,1))
 
-
+# monthly_income_lm = lm(attr$MonthlyIncome~attr$Attrition,data= attr)
+# monthly_income_res = resid(monthly_income_lm)
+# monthly_income_res_dt=data.table('res'=monthly_income_res)
+# ggplot(monthly_income_res_dt,aes(x=res,y=attr$Attrition))+geom_point()
 par(mfrow = c(1,2))
-hist(attr$NumCompaniesWorked,xlab='',main = 'Histogram of NumCompaniesWorked',freq = FALSE)
+hist(attr,attr$NumCompaniesWorked,xlab='',main = 'Histogram of NumCompaniesWorked',freq = FALSE)
 lines(density(attr$NumCompaniesWorked,na.rm = T))
 rug(jitter(attr$NumCompaniesWorked))
 qqPlot(attr$NumCompaniesWorked,main='Normal QQ plot of NumCompaniesWorked')
@@ -323,7 +331,7 @@ abline(h = median(attr$YearsWithCurrManager, na.rm = T), lty = 3)
 
 #Chi Plot for inspecting the independence
 chi.plot(attr$MonthlyIncome,attr$Age)
-
+plot(qc<-qchisq((1:nrow(attr)-1/2)/nrow(attr),df=))
 #Plotting joint boxplots for various categories wrt numerical column Age
 bwplot(attr$Department ~ attr$Age, data=attr, ylab='Department',xlab='Age')
 bwplot(attr$Gender ~ attr$Age, data=attr, ylab='Gender',xlab='Age')
@@ -458,7 +466,7 @@ pairs(attr_pca[,10:14],pch=".",cex=1.5)
 correplot<-cor(attr_pca)
 corrplot(correplot,method="circle")
 #Finding the principal components of data
-attr_pca_done <- prcomp(attr_pca,scale=TRUE)
+attr_pca_done <- princomp(attr_pca,scores = TRUE, cor = TRUE)
 attr_pca_done
 names(attr_pca_done)
 head(attr_pca_done)
@@ -474,6 +482,7 @@ sumoflambdas
 #Variance %
 pctvar<- (eigenvalues/sumoflambdas)*100
 pctvar
+barplot(pctvar,main="scree plot",xlab="Principal Component",ylab="Percent Variation")
 #Calculate cumulative of variance
 cumvar <- cumsum(pctvar)
 cumvar
@@ -482,10 +491,21 @@ matlambdas
 
 rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
 round(matlambdas,4)
-attr_pca_done$rotation
+
+
+#Loadings of principal Components
+loadings(attr_pca_done)
+attr_pca_done$loadings
+plot(attr_pca_done)
+eigenvec_attr<-attr_pca_done$rotation 
 #Visualize PCA using Scree plot
-fviz_screeplot(attr_pca_done, ncp=14)
+fviz_screeplot(attr_pca_done, type='bar',main='Scree plot')
 summary(attr_pca_done)
+#Biplot of score variables
+biplot(attr_pca_done)
+
+#Scores of the components
+attr_pca_done$scores[1:10,]
 
 
 
@@ -577,9 +597,134 @@ center <- attr_pca_done$center
 scale <- attr_pca_done$scale
 new_attrition <- as.matrix(attr[,-2])
 new_attrition
-#drop(scale(new_attrition,center=center, scale=scale)%*%attr_pca_done$rotation[,1])
+drop(scale(new_attrition,center=center, scale=scale)%*%attr_pca_done$rotation[,2])
 predict(attr_pca_done)[,2]
 #The aboved two gives us the same thing. predict is a good function to know.
 out <- sapply(10:14, function(i){plot(attr$Attrition,attr_pca_done$x[,i],xlab=paste("PC",i,sep=""),ylab="Attrition")})
 out
 pairs(attr_pca_done$x[,10:14], ylim = c(-6,4),xlim = c(-6,4),panel=function(x,y,...){text(x,y,attr$Attrition)})
+# covariance<-cov(attr_pca)
+# cm<-colMeans(attr_pca)
+# cm
+# distance<-dist(scale(attr_pca,center=FALSE))
+# d<-apply(attr_pca,MARGIN = 1,function(attr_pca)+t(attr_pca-cm)%*%solve(covariance)%*%(attr_pca-cm))
+# plot(qc<-qchisq((1:nrow(attr_pca)-1/2)/nrow(attr_pca),df=14),sd<-sort(d),
+#               xlab=expression(paste(chi[14]^2,"Quantile")),ylab="Ordered distances")
+# oups<-which(rank(abs(qc-sd),ties="random")>nrow(attr_pca)-14)
+# text(qc[oups],sd[oups]-1.5,oups)
+# abline(a=0,b=1,col="orange")
+# attr_pca_new<-log(attr_pca[,numvar])
+# covariance<-cov(attr_pca_new)
+# correlation<-cor(attr_pca_new)
+# #colmeans
+# cm_log<-colMeans(attr_pca_new)
+# distance<-dist(scale,center=FALSE)
+# d<-apply(attr_pca_new,MARGIN=1,function(attr_pca_new)+t(attr_pca_new - cm_log)%*%
+#            solve(covariance)%*%(attr_pca_new - cm))
+# plot(qc<-qchisq(1:nrow(paste(attr_pca_new),df=14),sd<-sort(d))
+
+#ClusTERING
+
+#K-Means Clustering 
+
+#We implemented non hierchal clustering because of more than 1000 samples
+
+attr_k <- read.csv("MVA/Attrition Dataset.csv") 
+
+attach(attr_k) 
+
+# Standardizing the data with scale() 
+
+attr_std <- scale(attr_pca[,1:14]) 
+
+# K-means, k=2, 3, 4, 5, 6 
+
+# Centers (k's) are numbers thus, 10 random sets are chosen 
+
+
+
+(kmeans2_attr_std <- kmeans(attr_std,2,nstart = 10)) 
+
+# Computing the percentage of variation accounted for. Two clusters 
+
+perc.var.2 <- round(100*(1 - kmeans2_attr_std$betweenss/kmeans2_attr_std$totss),1) 
+
+names(perc.var.2) <- "Perc. 2 clus" 
+
+perc.var.2 
+
+
+
+# Computing the percentage of variation accounted for. Three clusters 
+
+(kmeans3_attr_std <- kmeans(attr_std,3,nstart = 10)) 
+
+perc.var.3 <- round(100*(1 - kmeans3_attr_std$betweenss/kmeans3_attr_std$totss),1) 
+
+names(perc.var.3) <- "Perc. 3 clus" 
+
+perc.var.3 
+
+
+
+# Computing the percentage of variation accounted for. Four clusters 
+
+(kmeans4_attr_std  <- kmeans(attr_std,4,nstart = 10)) 
+
+perc.var.4 <- round(100*(1 - kmeans4_attr_std$betweenss/kmeans4_attr_std$totss),1) 
+
+names(perc.var.4) <- "Perc. 4 clus" 
+
+perc.var.4 
+
+
+
+# Computing the percentage of variation accounted for. Five clusters 
+
+(kmeans5_attr_std  <- kmeans(attr_std,5,nstart = 10)) 
+
+perc.var.5 <- round(100*(1 - kmeans5_attr_std$betweenss/kmeans5_attr_std$totss),1) 
+
+names(perc.var.5) <- "Perc. 5 clus" 
+
+perc.var.5 
+
+(kmeans6_attr_std  <- kmeans(attr_std,6,nstart = 10)) 
+
+
+
+# Computing the percentage of variation accounted for. Six clusters 
+
+perc.var.6 <- round(100*(1 - kmeans6_attr_std$betweenss/kmeans6_attr_std$totss),1) 
+
+names(perc.var.6) <- "Perc. 6 clus" 
+
+perc.var.6 
+
+
+#Factor Analysis
+#parallel analysis suggest factor recommendation
+parallel<-fa.parallel(attr_pca[,1:14],fm='minres',fa='fa')
+#The gap between simulated data and actual data tends to be between 3 and 4 
+threefactor<-principal(attr_pca[,1:14],nfactors=3,rotate='varimax')
+print(threefactor)
+class(threefactor)
+#Display factor values 
+threefactor$values
+#Display factor loadings
+threefactor$loadings
+#communalities
+threefactor$communality
+#Rotated factor scores
+head(threefactor$scores)
+#round threefactor values
+round(threefactor$values,3)
+
+
+#Visualize the relationship and factor recommendations for simple structure
+
+fa.diagram(threefactor)
+
+colnames(threefactor$loadings)<- c("No.OfYears","PerformanceMetric","salaryMetric")
+colnames(threefactor$loadings)
+plot(threefactor)
