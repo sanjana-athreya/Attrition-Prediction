@@ -26,13 +26,14 @@ library(factoextra)
 library(corrplot)
 library(devtools)
 library(data.table)
+library(psych)
 install.packages("cluster", lib="/Library/Frameworks/R.framework/Versions/3.5/Resources/library") 
 
 library(cluster) 
 
 ##Importing Data and inital analyses
 #Importing csv file from a location
-attr<- read.csv("C:/Users/HP/Downloads/HR-Employee-Attrition.csv")
+attr<- read.csv("C:/Users/sanja/Desktop/Assignments/MVA/HR Data.csv")
 attr <- as.data.frame(attr)
 glimpse(attr)
 
@@ -728,3 +729,120 @@ fa.diagram(threefactor)
 colnames(threefactor$loadings)<- c("No.OfYears","PerformanceMetric","salaryMetric")
 colnames(threefactor$loadings)
 plot(threefactor)
+
+
+#Multiple Regression
+#install.packages("GGally")
+#install.packages("FFally")
+attach(attr)
+View(attr)
+attr[, c(2)] <- sapply(attr[, c(2)], as.numeric)
+
+
+fit_attr<- lm(Attrition~Age+DailyRate+DistanceFromHome+HourlyRate+MonthlyIncome+MonthlyRate+NumCompaniesWorked+PercentSalaryHike+TotalWorkingYears+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager)
+fit_attr
+summary(fit_attr)
+coefficients(fit_attr)
+
+#install.packages("GGally")
+#install.packages("FFally")
+library(GGally)
+confint(fit_attr,level=0.95)
+#Predicted Values
+fitted(fit_attr)
+residuals(fit_attr)
+#Anova table
+anova(fit_attr)
+vcov(fit_attr)
+temp<-influence.measures(fit_attr)
+temp
+View(temp)
+#Diagnostic Plot
+plot(fit_attr)
+
+
+#Assessing Outliers
+outlierTest(fit_attr)
+
+qqPlot(fit_attr, main="QQ Plot")
+# graphics.off()
+# par(mfrow = c(1,2))
+plot.new(); 
+dev.off()
+leveragePlots(fit_attr) 
+# Influential Observations
+# added variable plots
+avPlots(fit_attr)
+
+# Normality of Residuals
+# qq plot for studentized resid
+qqPlot(fit_attr, main="QQ Plot")
+
+
+# distribution of studentized residuals
+library(MASS)
+sresid <- studres(fit_attr)
+hist(sresid, freq=FALSE,
+     main="Distribution of Studentized Residuals")
+xfit<-seq(min(sresid),max(sresid),length=40)
+yfit<-dnorm(xfit)
+lines(xfit, yfit)
+
+#Non-constant Error Variance
+# Evaluate homoscedasticity
+# non-constant error variance test
+ncvTest(fit_attr)
+
+# plot studentized residuals vs. fitted values
+spreadLevelPlot(fit_attr)
+
+#Multi-collinearity
+# Evaluate Collinearity
+vif(fit_attr) # variance inflation factors
+sqrt(vif(fit_attr)) > 2 # problem?
+
+#Nonlinearity
+# component + residual plot
+crPlots(fit_attr)
+# Ceres plots
+#ceresPlots(fit_attr)
+
+install.packages("gvlma")
+library(gvlma)
+gvmodel <- gvlma(fit_attr)
+summary(gvmodel)
+fit_attr
+summary(fit_attr)
+fit1<-fit_attr
+fit2<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+MonthlyRate+NumCompaniesWorked+PercentSalaryHike+TotalWorkingYears+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
+summary(fit2)
+
+fit3<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+PercentSalaryHike+TotalWorkingYears+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
+summary(fit3)
+
+fit4<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+TotalWorkingYears+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
+summary(fit4)
+
+fit5<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
+summary(fit5)
+
+fit6<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+TrainingTimesLastYear+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
+summary(fit6)
+
+fit7<-  lm(Attrition~Age+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+TrainingTimesLastYear+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
+summary(fit7)
+
+fit8<-  lm(Attrition~Age+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
+summary(fit8)
+
+fit9<-  lm(Attrition~Age+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+YearsInCurrentRole+YearsSinceLastPromotion,data=attr)
+summary(fit9)
+
+
+#Comparing model
+anova(fit1,fit9)
+
+step <- stepAIC(fit1, direction="both")
+step$anova
+attach(attr)
+predict.lm(fit9, data.frame(Age=27, DistanceFromHome=10,MonthlyIncome=2000,NumCompaniesWorked=1, YearsInCurrentRole=3,YearsSinceLastPromotion=1))
