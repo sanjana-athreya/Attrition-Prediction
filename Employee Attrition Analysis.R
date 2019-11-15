@@ -817,11 +817,14 @@ fit1<-fit_attr
 fit2<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+MonthlyRate+NumCompaniesWorked+PercentSalaryHike+TotalWorkingYears+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
 summary(fit2)
 
+
+
 fit3<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+PercentSalaryHike+TotalWorkingYears+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
 summary(fit3)
 
 fit4<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+TotalWorkingYears+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
 summary(fit4)
+
 
 fit5<-  lm(Attrition~Age+DailyRate+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+TrainingTimesLastYear+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
 summary(fit5)
@@ -832,11 +835,13 @@ summary(fit6)
 fit7<-  lm(Attrition~Age+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+TrainingTimesLastYear+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
 summary(fit7)
 
+
 fit8<-  lm(Attrition~Age+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager,data=attr)
 summary(fit8)
 
 fit9<-  lm(Attrition~Age+DistanceFromHome+MonthlyIncome+NumCompaniesWorked+YearsInCurrentRole+YearsSinceLastPromotion,data=attr)
 summary(fit9)
+
 
 
 #Comparing model
@@ -846,3 +851,114 @@ step <- stepAIC(fit1, direction="both")
 step$anova
 attach(attr)
 predict.lm(fit9, data.frame(Age=27, DistanceFromHome=10,MonthlyIncome=2000,NumCompaniesWorked=1, YearsInCurrentRole=3,YearsSinceLastPromotion=1))
+
+##Logistic Regression
+library(ggplot2)
+library(cowplot)
+attr <- as.data.frame(attr)
+summary(attr)
+glimpse(attr)
+
+#Checking if there are any NULL values in any of the columns  
+#table(is.na(attr))
+#str_detect(attr,'NA')
+
+##Checking relationships between our dependent variable and each of our independent categorical variable.
+xtabs(~Attrition+BusinessTravel,data=attr)
+xtabs(~Attrition+Department,data=attr)
+xtabs(~Attrition+Education,data=attr)
+xtabs(~Attrition+EducationField,data=attr)
+xtabs(~Attrition+EnvironmentSatisfaction,data=attr)
+xtabs(~Attrition+Gender,data=attr)
+xtabs(~Attrition+JobInvolvement,data=attr)
+xtabs(~Attrition+JobLevel,data=attr)
+xtabs(~Attrition+JobRole,data=attr)
+xtabs(~Attrition+JobSatisfaction,data=attr)
+xtabs(~Attrition+MaritalStatus,data=attr)
+xtabs(~Attrition+OverTime,data=attr)
+xtabs(~Attrition+PerformanceRating,data=attr)
+xtabs(~Attrition+RelationshipSatisfaction,data=attr)
+xtabs(~Attrition+StockOptionLevel,data=attr)
+xtabs(~Attrition+WorkLifeBalance,data=attr)
+
+attr$Attrition<-factor(attr$Attrition,levels = c(1 ,2),labels = c('No','Yes'))
+
+
+#By the above we can see that the independent variables Education and EducationFeild do not have much impact on the dependent variable-Attrition.
+#Hence, we will create 2 logistic models. One simple model, which will not include the independent variables Education and EducationFeild and
+#The other model, which will include all independent variables
+attach(attr)
+logistic_simple <- glm(Attrition~BusinessTravel+Department+
+                         EnvironmentSatisfaction+Gender+JobInvolvement+JobLevel+
+                         JobRole+JobSatisfaction+MaritalStatus+
+                         OverTime+PerformanceRating+RelationshipSatisfaction+
+                         StockOptionLevel+WorkLifeBalance, data=attr, family="binomial")
+summary(logistic_simple)
+
+logistic <- glm(Attrition~BusinessTravel+Department+Education+EducationField+
+                         EnvironmentSatisfaction+Gender+JobInvolvement+JobLevel+
+                         JobRole+JobSatisfaction+MaritalStatus+
+                         OverTime+PerformanceRating+RelationshipSatisfaction+
+                         StockOptionLevel+WorkLifeBalance, data=attr, family="binomial")
+summary(logistic)
+
+
+ll.null <- logistic$null.deviance/-2
+ll.proposed <- logistic$deviance/-2
+
+
+## McFadden's Pseudo R^2 = [ LL(Null) - LL(Proposed) ] / LL(Null)
+(ll.null - ll.proposed) / ll.null
+
+## The p-value forthe R^2
+1 - pchisq(2*(ll.proposed - ll.null), df=(length(logistic$coefficients)-1))
+
+## Now we can plot the data
+predicted.data <- data.frame(probability.of.Attrition=logistic$fitted.values,Attrition=attr$Attrition)
+predicted.data <- predicted.data[order(predicted.data$probability.of.Attrition, decreasing=FALSE),]
+predicted.data$rank <- 1:nrow(predicted.data)
+## Lastly, we can plot the predicted probabilities for each sample having
+## Attriton and color by whether or not they would actually leave the company
+ggplot(data=predicted.data,aes(x=rank, y=probability.of.Attrition)) +
+  geom_point(aes(color=Attrition), alpha=1, shape=4, stroke=2) +
+  xlab("Index") +
+  ylab("Predicted probability of Attrition")
+
+confusion_matrix(logistic)
+pdata <- predict(logistic,newdata=attr,type="response" )
+pdata
+
+attr$Attrition
+
+pdataF <- as.factor(ifelse(test=as.numeric(pdata>0.5) == 0, yes="Employee will Leave", no="Employee will not Leave"))
+
+roc(attr$Attrition,logistic$fitted.values,plot=TRUE)
+par(pty='s')
+roc(attr$Attrition,logistic$fitted.values,plot=TRUE)
+roc(attr$Attrition,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE)
+roc(attr$Attrition,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage")
+roc(attr$Attrition,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4)
+## If we want to find out the optimal threshold we can store the
+## data used to make the ROC graph in a variable...
+roc.info <- roc(attr$Attrition, logistic$fitted.values, legacy.axes=TRUE)
+str(roc.info)
+roc.df <- data.frame(tpp=roc.info$sensitivities*100, ## tpp = true positive percentage
+                     fpp=(1 - roc.info$specificities)*100, ## fpp = false positive precentage
+                     thresholds=roc.info$thresholds)
+roc.df
+
+roc(attr$Attrition,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4, percent=TRUE)
+
+roc(attr$Attrition,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4, percent=TRUE, print.auc=TRUE)
+
+roc(attr$Attrition,logistic$fitted.values,plot=TRUE, legacy.axes=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4, percent=TRUE, print.auc=TRUE, partial.auc=c(100, 90), auc.polygon = TRUE, auc.polygon.col = "#377eb822", print.auc.x=45)
+
+# Lets do two roc plots to understand which model is better
+roc(attr$Attrition, logistic_simple$fitted.values, plot=TRUE, legacy.axes=TRUE, percent=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#377eb8", lwd=4, print.auc=TRUE)
+
+# Lets add the other graph
+plot.roc(attr$Attrition, logistic$fitted.values, percent=TRUE, col="#4daf4a", lwd=4, print.auc=TRUE, add=TRUE, print.auc.y=40)
+legend("bottomright", legend=c("Simple", "Non Simple"), col=c("#377eb8", "#4daf4a"), lwd=4) # Make it user friendly
+
+# reset the par area back to the default setting
+par(pty='m')
