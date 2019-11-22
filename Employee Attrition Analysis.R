@@ -27,9 +27,9 @@ library(corrplot)
 library(devtools)
 library(data.table)
 library(psych)
-install.packages("cluster", lib="/Library/Frameworks/R.framework/Versions/3.5/Resources/library") 
+install.packages("cluster", lib="/Library/Frameworks/R.framework/Versions/3.5/Resources/library")
 
-library(cluster) 
+library(cluster)
 
 ##Importing Data and inital analyses
 #Importing csv file from a location
@@ -43,7 +43,7 @@ dim(attr)
 #View the first 5 rows of the dataset
 head(attr)
 summary(attr)
-#Rename the Age column 
+#Rename the Age column
 colnames(attr)[1] <- "Age"
 #Calculating the number of null values in each of the columns
 colSums(sapply(attr,is.na))
@@ -87,9 +87,9 @@ attr %>%
   geom_text(aes(label = n), vjust = -0.5, position = position_dodge(0.9))
 
 #Influence of features on Attrition
-ggplot(data=attr, aes(attr$Age)) + 
-  geom_histogram(breaks=seq(20, 50, by=2), 
-                 col="red", 
+ggplot(data=attr, aes(attr$Age)) +
+  geom_histogram(breaks=seq(20, 50, by=2),
+                 col="red",
                  aes(fill=..count..))+
   labs(x="Age", y="Count")+
   scale_fill_gradient("Count", low="yellow", high="dark red")
@@ -341,17 +341,17 @@ bwplot(attr$JobRole ~ attr$Age, data=attr, ylab='JobRole',xlab='Age')
 bwplot(attr$MaritalStatus ~ attr$MonthlyIncome, data=attr, ylab='MaritalStatus',xlab='Age')
 bwplot(attr$BusinessTravel ~ attr$Age, data=attr, ylab='BusinessTravel',xlab='Age')
 #Plotting stripplots for various categories wrt numerical column Age
-bwplot(attr$Department ~ attr$Age, data=attr,panel=panel.bpplot, 
+bwplot(attr$Department ~ attr$Age, data=attr,panel=panel.bpplot,
        probs=seq(.01,.49,by=.01), datadensity=TRUE, ylab='Department',xlab='Age')
-bwplot(attr$Gender ~ attr$Age, data=attr,panel=panel.bpplot, 
+bwplot(attr$Gender ~ attr$Age, data=attr,panel=panel.bpplot,
        probs=seq(.01,.49,by=.01), datadensity=TRUE, ylab='Gender',xlab='Age')
-bwplot(attr$EducationField ~ attr$Age, data=attr,panel=panel.bpplot, 
+bwplot(attr$EducationField ~ attr$Age, data=attr,panel=panel.bpplot,
        probs=seq(.01,.49,by=.01), datadensity=TRUE, ylab='EducationField',xlab='Age')
-bwplot(attr$JobRole ~ attr$Age, data=attr,panel=panel.bpplot, 
+bwplot(attr$JobRole ~ attr$Age, data=attr,panel=panel.bpplot,
        probs=seq(.01,.49,by=.01), datadensity=TRUE, ylab='JobRole',xlab='Age')
-bwplot(attr$MartialStatus ~ attr$Age, data=attr,panel=panel.bpplot, 
+bwplot(attr$MartialStatus ~ attr$Age, data=attr,panel=panel.bpplot,
        probs=seq(.01,.49,by=.01), datadensity=TRUE, ylab='MartialStatus',xlab='Age')
-bwplot(attr$BusinessTravel ~ attr$Age, data=attr,panel=panel.bpplot, 
+bwplot(attr$BusinessTravel ~ attr$Age, data=attr,panel=panel.bpplot,
        probs=seq(.01,.49,by=.01), datadensity=TRUE, ylab='BusinessTravel',xlab='Age')
 
 data<-attr[,c('Age','DailyRate','DistanceFromHome','HourlyRate',
@@ -410,7 +410,7 @@ attr_i <- data.frame(scale(attr_i))
 #Null Hypothesis - The two means are equal
 #Alternate Hypothesis - Difference in the two means is not zero
 #pvalue >= 0.05, accept null hypothesis
-#Or 
+#Or
 #else accept the alternate hypothesis
 
 #Univariate mean comparison using t test
@@ -498,7 +498,7 @@ round(matlambdas,4)
 loadings(attr_pca_done)
 attr_pca_done$loadings
 plot(attr_pca_done)
-eigenvec_attr<-attr_pca_done$rotation 
+eigenvec_attr<-attr_pca_done$rotation
 #Visualize PCA using Scree plot
 fviz_screeplot(attr_pca_done, type='bar',main='Scree plot')
 summary(attr_pca_done)
@@ -511,7 +511,7 @@ attr_pca_done$scores[1:10,]
 
 
 #Sample scores stored in attr_pca$x
-#We need to calculate the scores on each of these components for each individual in our sample. 
+#We need to calculate the scores on each of these components for each individual in our sample.
 attr_pca_done$x
 #x_pca$x
 
@@ -626,91 +626,91 @@ pairs(attr_pca_done$x[,10:14], ylim = c(-6,4),xlim = c(-6,4),panel=function(x,y,
 
 #ClusTERING
 
-#K-Means Clustering 
+#K-Means Clustering
 
 #We implemented non hierchal clustering because of more than 1000 samples
 
-attr_k <- read.csv("MVA/Attrition Dataset.csv") 
+attr_k <- read.csv("MVA/Attrition Dataset.csv")
 
-attach(attr_k) 
+attach(attr_k)
 
-# Standardizing the data with scale() 
+# Standardizing the data with scale()
 
-attr_std <- scale(attr_pca[,1:14]) 
+attr_std <- scale(attr_pca[,1:14])
 
-# K-means, k=2, 3, 4, 5, 6 
+# K-means, k=2, 3, 4, 5, 6
 
-# Centers (k's) are numbers thus, 10 random sets are chosen 
-
-
-
-(kmeans2_attr_std <- kmeans(attr_std,2,nstart = 10)) 
-
-# Computing the percentage of variation accounted for. Two clusters 
-
-perc.var.2 <- round(100*(1 - kmeans2_attr_std$betweenss/kmeans2_attr_std$totss),1) 
-
-names(perc.var.2) <- "Perc. 2 clus" 
-
-perc.var.2 
+# Centers (k's) are numbers thus, 10 random sets are chosen
 
 
 
-# Computing the percentage of variation accounted for. Three clusters 
+(kmeans2_attr_std <- kmeans(attr_std,2,nstart = 10))
 
-(kmeans3_attr_std <- kmeans(attr_std,3,nstart = 10)) 
+# Computing the percentage of variation accounted for. Two clusters
 
-perc.var.3 <- round(100*(1 - kmeans3_attr_std$betweenss/kmeans3_attr_std$totss),1) 
+perc.var.2 <- round(100*(1 - kmeans2_attr_std$betweenss/kmeans2_attr_std$totss),1)
 
-names(perc.var.3) <- "Perc. 3 clus" 
+names(perc.var.2) <- "Perc. 2 clus"
 
-perc.var.3 
-
-
-
-# Computing the percentage of variation accounted for. Four clusters 
-
-(kmeans4_attr_std  <- kmeans(attr_std,4,nstart = 10)) 
-
-perc.var.4 <- round(100*(1 - kmeans4_attr_std$betweenss/kmeans4_attr_std$totss),1) 
-
-names(perc.var.4) <- "Perc. 4 clus" 
-
-perc.var.4 
+perc.var.2
 
 
 
-# Computing the percentage of variation accounted for. Five clusters 
+# Computing the percentage of variation accounted for. Three clusters
 
-(kmeans5_attr_std  <- kmeans(attr_std,5,nstart = 10)) 
+(kmeans3_attr_std <- kmeans(attr_std,3,nstart = 10))
 
-perc.var.5 <- round(100*(1 - kmeans5_attr_std$betweenss/kmeans5_attr_std$totss),1) 
+perc.var.3 <- round(100*(1 - kmeans3_attr_std$betweenss/kmeans3_attr_std$totss),1)
 
-names(perc.var.5) <- "Perc. 5 clus" 
+names(perc.var.3) <- "Perc. 3 clus"
 
-perc.var.5 
-
-(kmeans6_attr_std  <- kmeans(attr_std,6,nstart = 10)) 
+perc.var.3
 
 
 
-# Computing the percentage of variation accounted for. Six clusters 
+# Computing the percentage of variation accounted for. Four clusters
 
-perc.var.6 <- round(100*(1 - kmeans6_attr_std$betweenss/kmeans6_attr_std$totss),1) 
+(kmeans4_attr_std  <- kmeans(attr_std,4,nstart = 10))
 
-names(perc.var.6) <- "Perc. 6 clus" 
+perc.var.4 <- round(100*(1 - kmeans4_attr_std$betweenss/kmeans4_attr_std$totss),1)
 
-perc.var.6 
+names(perc.var.4) <- "Perc. 4 clus"
+
+perc.var.4
+
+
+
+# Computing the percentage of variation accounted for. Five clusters
+
+(kmeans5_attr_std  <- kmeans(attr_std,5,nstart = 10))
+
+perc.var.5 <- round(100*(1 - kmeans5_attr_std$betweenss/kmeans5_attr_std$totss),1)
+
+names(perc.var.5) <- "Perc. 5 clus"
+
+perc.var.5
+
+(kmeans6_attr_std  <- kmeans(attr_std,6,nstart = 10))
+
+
+
+# Computing the percentage of variation accounted for. Six clusters
+
+perc.var.6 <- round(100*(1 - kmeans6_attr_std$betweenss/kmeans6_attr_std$totss),1)
+
+names(perc.var.6) <- "Perc. 6 clus"
+
+perc.var.6
 
 
 #Factor Analysis
 #parallel analysis suggest factor recommendation
 parallel<-fa.parallel(attr_pca[,1:14],fm='minres',fa='fa')
-#The gap between simulated data and actual data tends to be between 3 and 4 
+#The gap between simulated data and actual data tends to be between 3 and 4
 threefactor<-principal(attr_pca[,1:14],nfactors=3,rotate='varimax')
 print(threefactor)
 class(threefactor)
-#Display factor values 
+#Display factor values
 threefactor$values
 #Display factor loadings
 threefactor$loadings
@@ -767,9 +767,9 @@ outlierTest(fit_attr)
 qqPlot(fit_attr, main="QQ Plot")
 # graphics.off()
 # par(mfrow = c(1,2))
-plot.new(); 
+plot.new();
 dev.off()
-leveragePlots(fit_attr) 
+leveragePlots(fit_attr)
 # Influential Observations
 # added variable plots
 avPlots(fit_attr)
@@ -855,6 +855,7 @@ predict.lm(fit9, data.frame(Age=27, DistanceFromHome=10,MonthlyIncome=2000,NumCo
 ##Logistic Regression
 library(ggplot2)
 library(cowplot)
+theme_set(theme_cowplot())
 attr <- as.data.frame(attr)
 summary(attr)
 glimpse(attr)
@@ -881,25 +882,17 @@ xtabs(~Attrition+RelationshipSatisfaction,data=attr)
 xtabs(~Attrition+StockOptionLevel,data=attr)
 xtabs(~Attrition+WorkLifeBalance,data=attr)
 
-attr$Attrition<-factor(attr$Attrition,levels = c(1 ,2),labels = c('No','Yes'))
+#attr$Attrition<-factor(attr$Attrition,levels = c(1 ,2),labels = c('No','Yes'))
 
 
 #By the above we can see that the independent variables Education and EducationFeild do not have much impact on the dependent variable-Attrition.
 #Hence, we will create 2 logistic models. One simple model, which will not include the independent variables Education and EducationFeild and
 #The other model, which will include all independent variables
 attach(attr)
-logistic_simple <- glm(Attrition~BusinessTravel+Department+
-                         EnvironmentSatisfaction+Gender+JobInvolvement+JobLevel+
-                         JobRole+JobSatisfaction+MaritalStatus+
-                         OverTime+PerformanceRating+RelationshipSatisfaction+
-                         StockOptionLevel+WorkLifeBalance, data=attr, family="binomial")
+logistic_simple <- glm(Attrition~BusinessTravel+Department+Education+EducationField+EnvironmentSatisfaction+Gender+JobInvolvement+JobLevel+JobRole+JobSatisfaction+MaritalStatus+OverTime+PerformanceRating+RelationshipSatisfaction+StockOptionLevel+WorkLifeBalance, data=attr, family="binomial")
 summary(logistic_simple)
 
-logistic <- glm(Attrition~BusinessTravel+Department+Education+EducationField+
-                         EnvironmentSatisfaction+Gender+JobInvolvement+JobLevel+
-                         JobRole+JobSatisfaction+MaritalStatus+
-                         OverTime+PerformanceRating+RelationshipSatisfaction+
-                         StockOptionLevel+WorkLifeBalance, data=attr, family="binomial")
+logistic <- glm(Attrition~Age+BusinessTravel+DailyRate+Department+DistanceFromHome+Education+EducationField+EnvironmentSatisfaction+Gender+HourlyRate+JobInvolvement+JobLevel+JobRole+JobSatisfaction+MaritalStatus+MonthlyIncome+MonthlyRate+NumCompaniesWorked+OverTime+PercentSalaryHike+PerformanceRating+RelationshipSatisfaction+StockOptionLevel+TotalWorkingYears+TrainingTimesLastYear+WorkLifeBalance+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+YearsWithCurrManager, data=attr, family="binomial")
 summary(logistic)
 
 
@@ -919,13 +912,14 @@ predicted.data <- predicted.data[order(predicted.data$probability.of.Attrition, 
 predicted.data$rank <- 1:nrow(predicted.data)
 ## Lastly, we can plot the predicted probabilities for each sample having
 ## Attriton and color by whether or not they would actually leave the company
+#ggplot(data=predicted.data,aes(x=rank, y=probability.of.Attrition)) +geom_point(aes(color=Attrition), alpha=1, shape=4, stroke=2) +xlab("Index") +ylab("Predicted probability of Attrition")
 ggplot(data=predicted.data,aes(x=rank, y=probability.of.Attrition)) +
   geom_point(aes(color=Attrition), alpha=1, shape=4, stroke=2) +
   xlab("Index") +
   ylab("Predicted probability of Attrition")
 
 confusion_matrix(logistic)
-pdata <- predict(logistic,newdata=attr,type="response" )
+pdata <- predict(logistic,newdata=attr,type="response")
 pdata
 
 attr$Attrition
@@ -962,3 +956,34 @@ legend("bottomright", legend=c("Simple", "Non Simple"), col=c("#377eb8", "#4daf4
 
 # reset the par area back to the default setting
 par(pty='m')
+
+
+##Multiple Discriminant Analysis
+library(ROCR)
+library(MASS)
+attr_mda <- attr
+dim(attr_mda)
+# Lets cut the data into two parts
+smp_size_raw <- floor(0.75 * nrow(attr_mda))
+train_ind_raw <- sample(nrow(attr_mda), size = smp_size_raw)
+train_raw.df <- as.data.frame(attr_mda[train_ind_raw, ])
+test_raw.df <- as.data.frame(attr_mda[-train_ind_raw, ])
+# We now have a training and a test set. Training is 75% and test is 25%
+attr_mda.lda <- lda(formula = train_raw.df$Attrition ~ ., data = train_raw.df)
+attr_mda.lda
+summary(attr_mda.lda)
+print(attr_mda.lda)
+plot(attr_mda.lda)
+attr_mda.lda.predict <- predict(attr_mda.lda, newdata = test_raw.df)
+attr_mda.lda.predict$class
+View(attr_mda.lda.predict)
+attr_mda.lda.predict$x
+# Get the posteriors as a dataframe.
+attr_mda.lda.predict.posteriors <- as.data.frame(attr_mda.lda.predict$posterior)#create ROC/AUC curve
+pred <- prediction(attr_mda.lda.predict.posteriors[,2], test_raw.df$Attrition)
+roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred, measure = "auc")
+auc.train <- auc.train@y.values
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .25, y = .65 ,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
